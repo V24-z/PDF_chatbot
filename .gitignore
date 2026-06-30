@@ -16,7 +16,7 @@ venv/
 # ==========================
 # Node.js / React / Vite
 # ==========================
-node_modules/
+frontend/node_modules/
 .vite/
 dist/
 dist-ssr/
