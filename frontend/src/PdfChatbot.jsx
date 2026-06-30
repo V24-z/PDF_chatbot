@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-
+const API_URL = import.meta.env.VITE_API_URL;
 export default function PdfChatbot() {
   const [user, setUser] = useState(null); 
   const [authMode, setAuthMode] = useState('login'); 
@@ -22,7 +22,7 @@ export default function PdfChatbot() {
 
   const saveSessionToDatabase = async (userId, chatNode) => {
     try {
-      await fetch('http://127.0.0.1:8000/api/chats/save', {
+      await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -41,7 +41,7 @@ export default function PdfChatbot() {
 
   const fetchUserSessions = async (userId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/chats/${userId}`);
+      const res = await fetch(`${API_URL}/api/chats/${userId}`);
       const data = await res.json();
       if (data.length > 0) {
         setChats(data);
@@ -66,7 +66,7 @@ export default function PdfChatbot() {
     if (!authForm.username.trim() || !authForm.password.trim()) return;
     const endpoint = authMode === 'login' ? 'login' : 'register';
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/auth/${endpoint}`, {
+      const res = await fetch(`${API_URL}/api/auth/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authForm)
@@ -107,7 +107,7 @@ export default function PdfChatbot() {
     e.stopPropagation(); 
     if (chats.length === 1) return;
     try {
-      await fetch(`http://127.0.0.1:8000/api/chats/${idToDelete}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/api/chats/${idToDelete}`, { method: 'DELETE' });
       const updatedChats = chats.filter(c => c.id !== idToDelete);
       setChats(updatedChats);
       if (activeChatId === idToDelete) {
@@ -126,7 +126,7 @@ export default function PdfChatbot() {
     const formData = new FormData();
     formData.append('file', uploadedFile);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/upload', { method: 'POST', body: formData });
+      const res = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: formData });
       const data = await res.json();
       if (data.collection_id) {
         const finalTitle = uploadedFile.name.length > 20 ? `${uploadedFile.name.substring(0, 18)}...` : uploadedFile.name;
@@ -156,7 +156,7 @@ export default function PdfChatbot() {
     setInput('');
     setLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/chat', {
+      const res = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
