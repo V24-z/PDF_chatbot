@@ -22,7 +22,7 @@ export default function PdfChatbot() {
 
   const saveSessionToDatabase = async (userId, chatNode) => {
     try {
-      await fetch(API_URL, {
+      await fetch(`${API_URL}/api/chats/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
