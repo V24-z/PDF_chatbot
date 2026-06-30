@@ -1,0 +1,57 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+build/
+wheels/
+
+# Virtual Environments
+.venv/
+venv/
+.env
+
+# ==========================
+# Node.js / React / Vite
+# ==========================
+node_modules/
+.vite/
+dist/
+dist-ssr/
+*.local
+
+# ==========================
+# AI / Backend Generated Files
+# ==========================
+backend/storage/cache/
+backend/storage/vectorstore/
+backend/storage/chatbot_meta.db
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================
+# IDE & OS
+# ==========================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Visual Studio
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

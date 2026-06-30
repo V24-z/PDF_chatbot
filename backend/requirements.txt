@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-multipart
+langchain
+langchain-community
+langchain-groq
+pymupdf
+docling
+qdrant-client
+sentence-transformers
+python-dotenv
+pydantic-settings
+torch
+supabase

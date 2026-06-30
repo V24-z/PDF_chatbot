@@ -1,0 +1,111 @@
+Project save and LangChain architecture description
+
+1. Save functionality used in this project
+
+- The project persists user chat sessions using Supabase.
+- Frontend: `pdf-chatbot-ui/src/PdfChatbot.jsx`
+  - `saveSessionToDatabase(userId, chatNode)` sends POST to `/api/chats/save`.
+  - It stores `user_id`, chat `id`, `title`, `collection_id`, `response_type`, and `messages`.
+  - This function is called when a session is created, when a PDF upload finishes, and when chat messages are updated.
+- Backend: `app/main.py`
+  - `/api/chats/save` receives `ChatSaveRequest` and upserts the record into the Supabase `chats` table.
+  - The chat data is saved as JSON for `messages` and as plain fields for metadata.
+  - This is the `save` behavior in the project.
+
+2. What save means in this project
+
+- "save" means storing a workspace/chat session state for a logged-in user.
+- It keeps a record of:
+  - the active chat session id
+  - the current workspace title
+  - the Qdrant collection id for the uploaded PDF
+  - the selected response style (`normal` or `short`)
+  - the full message history of the conversation
+- This allows reloading the same chat session after refresh or login.
+
+3. LangChain architecture in this project
+
+- The project uses LangChain components for embedding, text splitting, and prompt-based LLM queries.
+- The main LangChain pieces are:
+  - `RecursiveCharacterTextSplitter` for chunking PDF text into overlapping segments.
+  - `HuggingFaceBgeEmbeddings` to generate vector embeddings from text chunks and queries.
+  - `ChatPromptTemplate` to build the final prompt that combines the retrieved PDF context with the user question.
+- The ingestion pipeline is:
+  1. User uploads a PDF via the frontend.
+  2. Backend reads the PDF bytes with PyMuPDF (`fitz`).
+  3. The PDF text is extracted page-by-page and concatenated.
+  4. If text is empty, the code keeps a fallback metadata string.
+  5. `RecursiveCharacterTextSplitter` splits the text into 1000-character chunks with 200-character overlap.
+  6. `HuggingFaceBgeEmbeddings` converts each chunk into a 384-dimensional vector.
+  7. Vectors and their chunk payloads are stored in Qdrant under a collection named from the PDF hash.
+
+- The retrieval/chat pipeline is:
+  1. A user asks a question in the frontend.
+  2. The frontend sends the question, `collection_id`, `response_type`, and prior `history` to `/api/chat`.
+  3. Backend embeds the query using `embed_model.embed_query`.
+  4. Qdrant returns top matching chunks for the query.
+  5. The backend builds a prompt with retrieved context and the user question.
+  6. `ChatGroq` is called with that prompt to generate the final answer.
+
+4. Why this architecture is used
+
+- PDF ingesting and chunking enables retrieval over large documents.
+- Vector embeddings allow semantic search instead of keyword-only search.
+- Qdrant stores the vector index and supports fast similarity search.
+- LangChain provides a clear separation between:
+  - text splitting
+  - embedding generation
+  - vector store retrieval
+  - prompt assembly and LLM response generation
+- Supabase handles user auth and persistent chat session storage.
+
+5. Key files and behavior
+
+- `app/main.py`:
+  - authentication: `/api/auth/register`, `/api/auth/login`
+  - session save: `/api/chats/save`
+  - chat history retrieval: `/api/chats/{user_id}`
+  - PDF upload and ingestion: `/api/upload`
+  - chat response generation: `/api/chat`
+- `pdf-chatbot-ui/src/PdfChatbot.jsx`:
+  - manages user login and session state
+  - calls save endpoint when sessions update
+  - uploads PDF and receives `collection_id`
+  - sends chat questions and receives bot answers
+
+6. Summary
+
+- The project saves chat session state using Supabase and a `/api/chats/save` endpoint.
+- It uses LangChain for PDF chunking, embedding, search, and prompt-driven generation.
+- The architecture is a hybrid document retrieval system: PDF -> chunk -> embed -> Qdrant -> prompt -> LLM.
+- This is the specific LangChain-based flow in the project.
+
+===================================================================
+             🌿 BOTANICAL AI - RAG PIPELINE BLUEPRINT 🌿
+===================================================================
+
+[1] PDF INGESTION & DUPLICATION CHECK
+-------------------------------------------------------------------
+- Flow: Upload PDF -> Generate MD5 Hash -> Check Database/Cloud Exists
+- Logic: Agar exact unique file hash pehle se Qdrant Cloud me exist karta hai, 
+  toh system extraction bypass karke direct existing collection map kar leta hai.
+
+[2] ADAPTIVE HYBRID TEXT EXTRACTION PAGE-BY-PAGE
+-------------------------------------------------------------------
+- Text Pages: PyMuPDF se high-speed vector string processing extraction hoti hai.
+- Scanned Pages/Complex Layouts: Agar page image/scanned format me hai, toh Docling 
+  OCR parse model use hota hai layout text mapping ke liye.
+
+[3] CHUNKING LOGIC SYSTEM (HEADER-BASED + RECURSIVE)
+-------------------------------------------------------------------
+- Try Header Detection: System pehle page hierarchy aur layout headers identify karta hai.
+- Header Found (Yes): Section-Based context building hoti hai taaki relevant parts alag na hon.
+- Header Found (No) / Fallback: LangChain RecursiveCharacterTextSplitter apply kiya jata hai 
+  (Chunk Size: 1000, Overlap: 200).
+
+[4] EMBEDDING MATRIX & VECTOR STORAGE
+-------------------------------------------------------------------
+- Embed: BAAI/bge-small-en-v1.5 (Hybrid optimized dense embeddings).
+- Hardware: Dynamic selection (GPU/CUDA execution if available, else optimized CPU).
+- Vector DB: Cloud Qdrant database clusters upsert processing.
+- Metadata Management: Local disk cache mapping for high-speed tracking parameters.
